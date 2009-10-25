@@ -1,0 +1,5 @@
+library.sqlite3
+sync.log
+sync.data
+sync.sqlite3
+syncconfig.rb
