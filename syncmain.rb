@@ -48,9 +48,9 @@ class TDMain
 		# Retrieve folders from Toodledo
 		folders_info = @tdmodel.folders
 		td_folders = Hash.new
-		folders_info.each do |folder_info|
+		folders_info.each do |folder_info|      
 	    td_folders[folder_info.name] = SFolder.new(
-	    folder_info.id,
+	    folder_info.server_id,
 	    folder_info.name,
 	    folder_info.is_private,
 	    folder_info.archived)
@@ -71,7 +71,7 @@ class TDMain
 	      real_name = '@' + real_name
       end
 	    td_contexts[real_name] = SContext.new(
-	    context_info.id,
+	    context_info.server_id,
       real_name
 	    )
 	  end
@@ -85,8 +85,8 @@ class TDMain
 		tasks_info = @tdmodel.tasks
 		td_tasks = {}
 		tasks_info.each do |task_info|
-			td_tasks[task_info.id] = STask.new(
-				task_info.id,
+			td_tasks[task_info.server_id] = STask.new(
+				task_info.server_id,
 				task_info.title,
 				task_info.star,
 				task_info.priority,
@@ -115,7 +115,7 @@ class TDMain
     # Iterate through remote folders list
     td_folders.each do |name, remotefolder|
       next if local_folders[name]
-      SLog::log "F >> L:+ #{name}"
+      SLog::log "F >> L:+ #{remotefolder.id}:#{name}"
       @localmodel.createfolder(name)
     end
     @localmodel.housekeeping
@@ -123,7 +123,7 @@ class TDMain
     # Iterate through local folders list
     local_folders.each do |name, localfolder|
       next if td_folders[name]
-      SLog::log "F >> R:+ #{name}"
+      SLog::log "F >> R:+ #{localfolder.id}:#{name}"
       @tdmodel.createfolder(name)
     end
     
@@ -132,7 +132,7 @@ class TDMain
     # Iterate through remote contexts list
     td_contexts.each do |name, remotecontext|
       next if local_contexts[name]
-      SLog::log "C >> L:+ #{name}"
+      SLog::log "C >> L:+ #{remotecontext.id}:#{name}"
       @localmodel.createcontext(name)
     end
     @localmodel.housekeeping
@@ -140,7 +140,7 @@ class TDMain
     # Iterate through local contexts list
     local_contexts.each do |name, localcontext|
       next if td_contexts[name]
-      SLog::log "C >> R:+ #{name}"
+      SLog::log "C >> R:+ #{localcontext.id}:#{name}"
       @tdmodel.createcontext(name)
     end
 

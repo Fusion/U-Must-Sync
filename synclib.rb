@@ -31,6 +31,10 @@ class SContext
 		@id = id
 		@name = name
 	end
+	
+	def server_id
+	  @id
+  end
 end
 
 class SFolder
@@ -41,6 +45,10 @@ class SFolder
 		@is_private = is_private
 		@archived = archived
 	end
+
+	def server_id
+	  @id
+  end
 end
 
 class STask
@@ -61,6 +69,10 @@ class STask
 		@added = added
 		@modified = modified
 	end
+	
+	def server_id
+	  @id
+  end
 end
 
 class SData
