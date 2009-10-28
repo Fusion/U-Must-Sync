@@ -1,16 +1,21 @@
-1. Install sqlite3: gem install sqlite3-ruby
-2. Install toodledo: gem install toodledo
-3. Added to  /Library/Ruby/Gems/1.8/gems/toodledo-1.3.1/lib/toodledo/session.rb:
-    # CFR: Reconnect with previous key so that we do not run afoul of rate limiter
+module Toodledo
+
+#
+# Monkey-patching the Toodledo API
+#
+
+  class Session
     attr_reader :key
+    # Reconnect with previous key so that we do not run afoul of rate limiter
     def reconnect(key, base_url = DEFAULT_API_URL, proxy = nil)
       logger.debug("reconnect(#{base_url}, #{proxy.inspect})") if logger
       @base_url = base_url
       @proxy = proxy
       @key = key
       @start_time = Time.now
-    end
-4. Added to  /Library/Ruby/Gems/1.8/gems/toodledo-1.3.1/lib/toodledo.rb:
+    end    
+  end
+  
   def self.resume(key, logger = nil)
     config = Toodledo.get_config()
 
@@ -31,17 +36,6 @@
     end
 
     session.disconnect()
-  end 
-5. Run ./resetdb.sh to create databases
-6. Create a file called 'syncconfig.rb' with this content:
-@@config = {
-  :connection => {
-    "url" => "http://www.toodledo.com/api.php",
-    "user_id" => "[your user id]"
-    "password" => "[your password]"
-  },
-  :mode => "online",
-# :mode => "mock",
-  :verbose => false
-}
-
+  end
+    
+end

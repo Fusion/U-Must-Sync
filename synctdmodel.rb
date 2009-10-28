@@ -6,6 +6,7 @@ class TDModel
   
   # Currently no support for private folders
   def createfolder(name)
+    @session.add_folder(name, 0)
   end
   
   def deletefolder(name)
@@ -16,6 +17,7 @@ class TDModel
   end
 
   def createcontext(name)
+    @session.add_context(name)
   end
   
   def deletecontext(name)
@@ -26,6 +28,13 @@ class TDModel
 	end
 	
 	def createtask(task)
+	  name = task.title
+	  params = {
+	    :folder => task.folder ? task.folder.name : nil,
+	    :context => task.context ? task.context.name : nil,
+	    :priority => PriorityConverter::l2t(task.priority)
+	  }
+	  @session.add_task(name, params)
   end
 
   def deletetask(name)
@@ -178,5 +187,7 @@ class TDMock < TDModel
 	end
 	
 	def createtask(task)
+	  p "Creating task:"
+	  p task
   end	
 end

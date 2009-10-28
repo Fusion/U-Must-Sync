@@ -195,10 +195,9 @@ class TDMain
           end
         end
       else
-        if @localmodel.older?(localtask.modified)
-          # This task was created locally after our previous sync
-          # CS#1
-          
+        if @localmodel.older?(localtask.modified) ### LOCAL TASK WAS CREATED, NO REMOTE TASK: CS#1
+          SLog::log "T R:=, L:+ >> R:+ #{id}:#{localtask.title}"
+          @tdmodel.createtask(localtask)
         end
       end
     end

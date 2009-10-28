@@ -4,9 +4,12 @@ require 'toodledo'
 require 'yaml'
 require 'date'
 
+require 'toodledo_patch'
+
 require 'synclog'
 require 'synctdmodel'
 require 'synclocalmodel'
+require 'syncpriority'
 
 # Let's add a method to time that will provide datetime conversion (Because sqlite3 Timestamp => Time object)
 class Time
@@ -52,7 +55,8 @@ class SFolder
 end
 
 class STask
-	attr_reader :id, :title, :star, :priority, :parent, :context, :folder, :tag, :note, :startdate, :completed, :timer, :added, :modified
+	attr_reader :id, :title, :star, :priority, :parent, :context, :tag, :note, :startdate, :completed, :timer, :added, :modified
+	attr_accessor :folder
 	def initialize(id, title, star, priority, parent, context, folder, tag, note, startdate, completed, timer, added, modified)
 		@id = id
 		@title = title

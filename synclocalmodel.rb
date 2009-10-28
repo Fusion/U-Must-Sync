@@ -22,6 +22,7 @@ class LocalModel
 	  # And write new timestamp
 	  @now = Time.new.to_sqlite3
 	  # For testing, a solid old value for lastsync: 260852376.079337
+	  # Or for a value definitely pre-dating all data: 189490501.0 (2007/1/2...)
     @sdb.execute("update info set lastsync=?", @now)
     
     # Now the local tasks database
@@ -121,6 +122,10 @@ class LocalModel
       )    
   end
   
+  # Returns an array of task info
+  # Note: if subtask ==> parent != nil
+  # if top-level task ==> folder != nil
+  # These should be mutually exclusive
   def tasks
     still_alive = {}
     @tasks_list = Hash.new
@@ -128,15 +133,34 @@ class LocalModel
 		  
 		  still_alive[row['Z_PK'].to_s] = true if row['Z_PK']
 		  
+		  this_folder = nil
+		  if row['ZPARENTLIST']
+		    @folders_list.each do |folder_name, folder_info|
+		      if row['ZPARENTLIST'] == folder_info.server_id
+		        this_folder = folder_info
+		        break
+		      end  
+	      end
+	    end
+
+	    # Look for context and tags
+	    ztitle = row['ZTITLE']
+	    context = /\@\w+/.match(ztitle).to_s
+	    this_context = @contexts_list[context]
+	    tag = /\/\w+/.match(ztitle).to_s
+	    ztitle = ztitle.gsub(/\@\w+/, '').gsub(/\/\w+/, '').rstrip
+	    #
+	    next if ztitle != "The Essentials" && ztitle != "Hit the Return key to add a task." && ztitle != "Learn The Hit List"
+	    
       @tasks_list[row['Z_PK'].to_s] = STask.new(
         @uidmapl2t[row['Z_PK']] ? @uidmapl2t[row['Z_PK']] : nil,
-        row['ZTITLE'],
+        ztitle,
         false,
         row['ZPRIORITY'],
-        @uidmapl2t[row['ZPARENTLIST']] ? @uidmapl2t[row['ZPARENTLIST']] : nil,
-        nil, # @todo context
-        nil, # @todo folder
-        nil, # tag
+        row['ZPARENTTASK'] ? row['ZPARENTTASK'].to_s : nil,
+        this_context,
+        this_folder,
+        tag,
         row['ZNOTES'],
         row['ZSTARTDATE'] ? row['zst'].to_datetime : nil,
         row['ZCOMPLETEDDATE'] ? row['zcd'].to_datetime : nil,
@@ -145,6 +169,26 @@ class LocalModel
         row['zmd'].to_datetime
       )
   	end
+  	
+  	# Now, keep in mind that, at least in this first release, tasks do not have parents on Toodledo
+  	# Therefore children need to inherit some stuff from top-level tasks...
+  	@tasks_list.each do |key, task_info|
+  	  next if nil == task_info.parent
+  	  
+      if nil == task_info.folder
+        parent_task = task_info
+        begin
+          parent_task = @tasks_list[parent_task.parent]
+          break if nil == parent_task
+ 
+          if nil != parent_task.folder
+            @tasks_list[key].folder = parent_task.folder
+            break
+          end
+        end while nil != parent_task
+      end
+	  end
+  	
 		# Sanity check: delete from uidmap if local task doesn't exist any more
 		# because it was deleted in THL
 		to_prune = []
@@ -180,7 +224,7 @@ class LocalModel
       nil,            # ZPARENTTASK (task, not folder)
       @toptaskid,     # Z_PK
       0,              # Z_OPT
-      task.priority,  # ZPRIORITY
+      PriorityConverter::t2l(task.priority),  # ZPRIORITY
       0,              # ZRECURRING
       uid,            # ZUIDNUM
       folder.id,      # ZPARENTLIST (folder, not task)
