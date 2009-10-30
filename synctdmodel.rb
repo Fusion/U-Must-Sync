@@ -1,5 +1,14 @@
 class TDModel
 
+  def server_info
+    @server_info = @session.get_server_info
+    @time_offset = @server_info[:unixtime] - Time.now.to_i
+  end
+
+  def offset
+    @time_offset
+  end
+  
   def folders
     @session.get_folders
   end
@@ -56,6 +65,7 @@ class TDOnline < TDModel
 		if (sdata.key && sdata.lastauth && (elapsed_seconds = (Time.now - sdata.lastauth).to_i) < 10800)
       SLog::log "Re-using current auth token; time left until new token request: #{10800 - elapsed_seconds} seconds"
   		Toodledo.resume(sdata.key) do |@session|
+  		  server_info
   			yield self if block_given?
   		end
     else
@@ -63,6 +73,7 @@ class TDOnline < TDModel
       sdata.lastauth = Time.now
   		Toodledo.begin do |@session|
   		  sdata.key = @session.key
+  		  server_info  		  
   			yield self if block_given?
   		end
 	  end

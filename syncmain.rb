@@ -83,6 +83,7 @@ class TDMain
 	  
 		# Retrieve tasks from Toodledo
 		tasks_info = @tdmodel.tasks
+
 		td_tasks = {}
 		tasks_info.each do |task_info|
 			td_tasks[task_info.server_id] = STask.new(
@@ -101,7 +102,11 @@ class TDMain
 				task_info.added,
 				task_info.modified)
 		end
-		
+
+### The two lines below can be used to ligten up the load on TD
+#		Serializer.store('tdtasks.ser', td_tasks)   # SERIALIZE SAMPLE FROM REAL SERVER
+#		td_tasks = Serializer.load('tdtasks.ser')		# BOGUS SAMPLE SERIALIZED FROM REAL SERVER
+
 		# Retrieve local tasks
 		local_tasks = @localmodel.tasks
 
@@ -135,6 +140,9 @@ class TDMain
       SLog::log "C >> L:+ #{remotecontext.id}:#{name}"
       @localmodel.createcontext(name)
     end
+    # Special case: "No Context"
+    @localmodel.createcontext('@No Context') if !local_contexts['@No Context']
+    
     @localmodel.housekeeping
 
     # Iterate through local contexts list
@@ -177,7 +185,7 @@ class TDMain
     # 2. Iterate though local tasks
     local_tasks.each do |id, localtask|
       if localtask.id ### THIS TASK IS LOCAL AND EXISTS/USED TO EXIST REMOTELY
-        if td_tasks[localtask.id] ### THIS TASK EXISTS LOCALLY AND REMOTELY
+        if td_tasks[localtask.id.to_s] ### THIS TASK EXISTS LOCALLY AND REMOTELY
           if @localmodel.older?(localtask.modified)
             # Modified locally
             # CS#3.1
@@ -187,17 +195,18 @@ class TDMain
           if @localmodel.older?(localtask.modified)
             # Conclusion: Deleted remotely.
             # CS#6
-            SLog::log "T R:- >> L:- #{id}:#{remotetask.title}" # WAIT ISN'T IT THE OTHER WAY AROUND HERE?
+            SLog::log "T R:- >> L:- #{id}:#{localtask.title}" # WAIT ISN'T IT THE OTHER WAY AROUND HERE?
           else
             # This task died remotely and was modified locally: CONFLICT
             # CS#3.2
-            SLog::log "T R:-,L:~ >> L:!,R:+ #{id}:#{remotetask.title}" 
+            SLog::log "T R:-,L:~ >> L:!,R:+ #{id}:#{localtask.title}" 
           end
         end
       else
         if @localmodel.older?(localtask.modified) ### LOCAL TASK WAS CREATED, NO REMOTE TASK: CS#1
           SLog::log "T R:=, L:+ >> R:+ #{id}:#{localtask.title}"
-          @tdmodel.createtask(localtask)
+          remote_id = @tdmodel.createtask(localtask)
+          @localmodel.mapuid(remote_id, id)
         end
       end
     end

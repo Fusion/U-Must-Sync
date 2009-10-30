@@ -150,10 +150,10 @@ class LocalModel
 	    tag = /\/\w+/.match(ztitle).to_s
 	    ztitle = ztitle.gsub(/\@\w+/, '').gsub(/\/\w+/, '').rstrip
 	    #
-	    next if ztitle != "The Essentials" && ztitle != "Hit the Return key to add a task." && ztitle != "Learn The Hit List"
+	    next if ztitle != "The Essentials" && ztitle != "Hit the Return key to add a task." && ztitle != "Learn The Hit List" && ztitle != "Add some items to your todo list" && ztitle != "Visit your Account Settings section and configure your account."
 	    
       @tasks_list[row['Z_PK'].to_s] = STask.new(
-        @uidmapl2t[row['Z_PK']] ? @uidmapl2t[row['Z_PK']] : nil,
+        @uidmapl2t[row['Z_PK'].to_s] ? @uidmapl2t[row['Z_PK'].to_s] : nil,
         ztitle,
         false,
         row['ZPRIORITY'],
@@ -249,5 +249,9 @@ class LocalModel
     @db.execute("insert into Z_5TASKS(Z_5TAGS, Z_7TASKS1) VALUES(?, ?)", context.id, @toptaskid)
     
     @sdb.execute("insert into uidmap(tduid, localuid) values(?, ?)", task.id, @toptaskid)
-  end  
+  end 
+  
+  def mapuid(remote_id, local_id)
+    @sdb.execute("insert into uidmap(tduid, localuid) values(?, ?)", remote_id, local_id)    
+  end
 end

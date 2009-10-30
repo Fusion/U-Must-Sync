@@ -123,3 +123,17 @@ class SData
   private :load, :store
   
 end
+
+class Serializer
+  def self.store(filename, what)
+    File.open(filename, 'w') do |f|
+      Marshal.dump(what, f)
+    end
+  end
+  
+  def self.load(filename)
+    File.open(filename) do |f|
+      Marshal.load(f)
+    end
+  end
+end
