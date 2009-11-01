@@ -46,6 +46,7 @@ class LocalModel
   end
   
   def older?(dt)
+    p "Is #{@lastsync} > #{dt}?"
     @lastsync <= dt
   end
   
